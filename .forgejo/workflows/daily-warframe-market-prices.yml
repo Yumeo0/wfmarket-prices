@@ -1,0 +1,36 @@
+name: Daily Warframe Market Prices
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-prices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+
+      - name: Fetch item prices
+        run: bun scripts/fetch-warframe-market-prices.ts
+
+      - name: Commit updated price data
+        run: |
+          git config user.name "Yumeo"
+          git config user.email "mail@yumeo.dev"
+          git add data/warframe-market-prices.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update warframe market prices"
+            git push
+          fi
